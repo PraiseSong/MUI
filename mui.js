@@ -4,7 +4,7 @@
  * @author Wireless front-end group Alipay UED
  * 
  * Include data parse engine JSON.js  http://http://www.json.org/
- * 
+ *
  * @global MUI
  * @version 1.0
  * @Date October 2010.
@@ -503,19 +503,18 @@
 				 * 获取特殊的节点属性
 				 * checked disabled className
 				 */
-                if (name in elem && elem[name] !== undefined && name !== 'style') {
-					//不能修改button|input的type属性
-                    if (rtype.test(elem.nodeName) && name === 'type') {
-                        MUI.error(elem + '\'s ' +'type property can\'t be changed!');
-                    }
-					
+                if (name in elem && elem[name] !== undefined && name !== 'style') {		
 					if(set){
                         if (value === null) {
                             elem.removeAttribute(name);
-                        }
-                        else {
+                        }else {
                             elem[name] = value;
                         }
+						
+						//不能修改button|input的type属性
+	                    if (rtype.test(elem.nodeName) && name === 'type') {
+	                        MUI.error(elem + '\'s ' +'type property can\'t be changed!');
+	                    }
 					}
 					
 					if(MUI.nodeName(elem,'form') && elem.getAttributeNode(name)){
@@ -589,11 +588,23 @@
 	
 	MUI.each(eventTypes.split(' '),function (name,i){
 		MUI.fn[name] = function (fn,context,args){
-			this.bind(name,fn,context,args);
+			//MUI 1.0注册事件时，不接受任何参数
+			var l = arguments.length;
+			
+			if( l === 3){
+				arguments[2] = null;
+			}
+
+			return l > 0 ? this.bind(name,fn,context,args) : this.trigger(name);
 		}
 	});
 	
 	MUI.fn.extend({
+		trigger : function (type){
+			return this.each(function (elem){
+				MUI.event.trigger(type,elem);
+			});
+		},
 		after : function(){
 			if(this[0] && this[0].parentNode){
 				return this.domManip(arguments,function (elem){
@@ -947,6 +958,34 @@
 			}
 		}
 	});
+	
+	MUI.event = {
+		trigger : function (type,elem){
+			if(!elem || elem.nodeType === 3 || elem.nodeType === 8){
+				return undefined;
+			}
+			
+			var inlineEvent;
+			
+			//内联事件
+			if(elem['on'+type]){
+				inlineEvent = elem['on'+type];
+				
+				inlineEvent();
+				
+				elem['on'+type] = null;
+			}
+			
+			if(elem[type]){
+				elem[type]();
+			}
+			
+			//将执行过的内联事件再次绑定到当前元素
+			if(inlineEvent){
+				elem['on'+type] = inlineEvent;
+			}
+		}
+	};
 
 	MUI.extend({
 		scope : function (fn,c,args){
