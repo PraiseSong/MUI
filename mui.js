@@ -960,7 +960,7 @@
 			
 			var inlineEvent;
 			
-			//内联事件
+			//内联事件 
 			if(elem['on'+type]){
 				inlineEvent = elem['on'+type];
 				
