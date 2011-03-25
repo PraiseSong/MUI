@@ -12,7 +12,6 @@
 
 (function (){
 	var doc = document,
-	    toString = Object.prototype.toString,
 	    types = {},
 		slice = Array.prototype.slice,
 		push = Array.prototype.push,
@@ -110,7 +109,7 @@
 	MUI.fn.init.prototype = MUI.fn;
 	
 	//MUI类和MUI实例的extend方法，主要用于开发插件
-	MUI.extend = MUI.fn.extend = function (){
+	MUI.extend = MUI.fn.extend = function (o){
 		var target = arguments[0]||{},
 		    length = arguments.length,
 			i = 1,
@@ -234,7 +233,7 @@
             return o;
 		},
 		type : function (o){
-			return o == null ? String(o) : types[toString.call(o)] || 'object';
+			return o === null ? String(o) : types[toString.call(o)] || 'object';
 		},
 		isFunction : function (o){
 			return MUI.type(o) === 'function';
@@ -276,7 +275,7 @@
 			var i = first.length || 0,
 			    j = 0;
 
-			if(!this.isArray(second) && !this.isFunction(second) && this.isObject(second) && second != '[object NodeList]'){
+			if(!this.isArray(second) && !this.isFunction(second) && this.isObject(second) && second !== '[object NodeList]'){
 				for(var k in second){
 					first[i++] = second[k];
 				}
@@ -296,9 +295,6 @@
 			return first;
 		},
 		inArray : function (elem,i,array){
-			var start = 0,
-				array = array;
-			
 			if(arguments.length === 2){
 				array = arguments[--arguments.length];
 				i = 0;
@@ -361,9 +357,7 @@
 				types,
 				id = ++MUI.id,
 				handlerObj = {},
-				handler,
-				args,
-				context;
+				handler;
 			
 			events = MUI.data(elem);
 			types = events[type];
@@ -553,7 +547,6 @@
 			    fcamelCase = function (all,letter){
 					return letter.toUpperCase();
 				},
-				name = name.replace(rdashAlpha,fcamelCase) || name,
 				cssNumber = {
 					zIndex : true,
 					opacity : true,
@@ -561,6 +554,8 @@
 					fontWeight : true,
 					zoom : true
 				};
+			
+			name = name.replace(rdashAlpha,fcamelCase) || name;
 
 			if(value !== undefined){
 				if(MUI.isNumber(value) && !cssNumber[name]){
@@ -715,7 +710,7 @@
 				}
 				
 				for(var i=0,nodeL = this.length;i<nodeL;i++){
-					return MUI.style.call(this[i],name);
+					MUI.style.call(this[i],name);
 				}
 			}
 		},
@@ -953,9 +948,7 @@
 	
 	MUI.each(domNode,function (method){
 		MUI.fn[method] = function (){
-			for(var i=0;i<this.length;i++){
-				return MUI(MUI[method](this[i]));
-			}
+			return MUI(MUI[method](this[0]));
 		}
 	});
 	
@@ -1357,8 +1350,6 @@ if (!JSON) {
 }
 
 //(function () {
-    "use strict";
-
     function f(n) {
         // Format integers to have at least two digits.
         return n < 10 ? '0' + n : n;
