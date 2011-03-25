@@ -464,8 +464,11 @@
 				ret = MUI.merge(ret,div.childNodes);
 			}
 			
+
 			MUI.each(ret,function (node){
-				fragment.appendChild(node);
+				if(node.nodeType){
+					fragment.appendChild(node);
+				}
 			});
 			
 			//阻止内存泄漏
@@ -571,7 +574,7 @@
 		},
 		parent : function (elem){
 			var parent = elem.parentNode;
-			
+
 			//父节点不有是文档片段
 			return parent && parent.nodeType !== 11 ? parent : null;
 		}
@@ -960,7 +963,7 @@
 			
 			var inlineEvent;
 			
-			//内联事件 
+			//内联事件
 			if(elem['on'+type]){
 				inlineEvent = elem['on'+type];
 				
@@ -1035,11 +1038,14 @@
 	 * @param (String) uri 请求的地址
 	 * @param (Object) cfg 当前请求所需的参数
 	 */
+	var xhr = new XMLHttpRequest();
+	
 	MUI.extend({
+		XHR : xhr,
 		AJAX : function (uri,cfg){
 			var obj = cfg ? cfg : {},
-			    xhr = new XMLHttpRequest(),
 				method = obj.method || 'GET',
+				xhr = MUI.XHR,
 				async = obj.async || true,
 				data = obj.data || null,
 				args = obj.args || null,
@@ -1676,5 +1682,3 @@ if (!JSON) {
 //}());
 window.JSON = window.JSON || JSON;
 })();
-
-
