@@ -1038,14 +1038,11 @@
 	 * @param (String) uri 请求的地址
 	 * @param (Object) cfg 当前请求所需的参数
 	 */
-	var xhr = new XMLHttpRequest();
-	
 	MUI.extend({
-		XHR : xhr,
 		AJAX : function (uri,cfg){
 			var obj = cfg ? cfg : {},
+			    xhr = new XMLHttpRequest(),
 				method = obj.method || 'GET',
-				xhr = MUI.XHR,
 				async = obj.async || true,
 				data = obj.data || null,
 				args = obj.args || null,
