@@ -4,7 +4,7 @@
  * @author Wireless front-end group Alipay UED
  * 
  * Include data parse engine JSON.js  http://http://www.json.org/
- *
+ * 
  * @global MUI
  * @version 1.0
  * @Date October 2010.
@@ -12,6 +12,7 @@
 
 (function (){
 	var doc = document,
+	    toString = Object.prototype.toString,
 	    types = {},
 		slice = Array.prototype.slice,
 		push = Array.prototype.push,
@@ -109,7 +110,7 @@
 	MUI.fn.init.prototype = MUI.fn;
 	
 	//MUI类和MUI实例的extend方法，主要用于开发插件
-	MUI.extend = MUI.fn.extend = function (o){
+	MUI.extend = MUI.fn.extend = function (){
 		var target = arguments[0]||{},
 		    length = arguments.length,
 			i = 1,
@@ -233,7 +234,7 @@
             return o;
 		},
 		type : function (o){
-			return o === null ? String(o) : types[toString.call(o)] || 'object';
+			return o == null ? String(o) : types[toString.call(o)] || 'object';
 		},
 		isFunction : function (o){
 			return MUI.type(o) === 'function';
@@ -275,7 +276,7 @@
 			var i = first.length || 0,
 			    j = 0;
 
-			if(!this.isArray(second) && !this.isFunction(second) && this.isObject(second) && second !== '[object NodeList]'){
+			if(!this.isArray(second) && !this.isFunction(second) && this.isObject(second) && second != '[object NodeList]'){
 				for(var k in second){
 					first[i++] = second[k];
 				}
@@ -295,6 +296,9 @@
 			return first;
 		},
 		inArray : function (elem,i,array){
+			var start = 0,
+				array = array;
+			
 			if(arguments.length === 2){
 				array = arguments[--arguments.length];
 				i = 0;
@@ -357,7 +361,9 @@
 				types,
 				id = ++MUI.id,
 				handlerObj = {},
-				handler;
+				handler,
+				args,
+				context;
 			
 			events = MUI.data(elem);
 			types = events[type];
@@ -464,11 +470,8 @@
 				ret = MUI.merge(ret,div.childNodes);
 			}
 			
-
 			MUI.each(ret,function (node){
-				if(node.nodeType){
-					fragment.appendChild(node);
-				}
+				fragment.appendChild(node);
 			});
 			
 			//阻止内存泄漏
@@ -500,18 +503,19 @@
 				 * 获取特殊的节点属性
 				 * checked disabled className
 				 */
-                if (name in elem && elem[name] !== undefined && name !== 'style') {		
+                if (name in elem && elem[name] !== undefined && name !== 'style') {
+					//不能修改button|input的type属性
+                    if (rtype.test(elem.nodeName) && name === 'type') {
+                        MUI.error(elem + '\'s ' +'type property can\'t be changed!');
+                    }
+					
 					if(set){
                         if (value === null) {
                             elem.removeAttribute(name);
-                        }else {
+                        }
+                        else {
                             elem[name] = value;
                         }
-						
-						//不能修改button|input的type属性
-	                    if (rtype.test(elem.nodeName) && name === 'type') {
-	                        MUI.error(elem + '\'s ' +'type property can\'t be changed!');
-	                    }
 					}
 					
 					if(MUI.nodeName(elem,'form') && elem.getAttributeNode(name)){
@@ -550,6 +554,7 @@
 			    fcamelCase = function (all,letter){
 					return letter.toUpperCase();
 				},
+				name = name.replace(rdashAlpha,fcamelCase) || name,
 				cssNumber = {
 					zIndex : true,
 					opacity : true,
@@ -557,8 +562,6 @@
 					fontWeight : true,
 					zoom : true
 				};
-			
-			name = name.replace(rdashAlpha,fcamelCase) || name;
 
 			if(value !== undefined){
 				if(MUI.isNumber(value) && !cssNumber[name]){
@@ -574,8 +577,8 @@
 		},
 		parent : function (elem){
 			var parent = elem.parentNode;
-
-			//父节点不有是文档片段
+			
+			//父节点不是文档片段
 			return parent && parent.nodeType !== 11 ? parent : null;
 		}
 	});
@@ -586,23 +589,11 @@
 	
 	MUI.each(eventTypes.split(' '),function (name,i){
 		MUI.fn[name] = function (fn,context,args){
-			//MUI 1.0注册事件时，不接受任何参数
-			var l = arguments.length;
-			
-			if( l === 3){
-				arguments[2] = null;
-			}
-
-			return l > 0 ? this.bind(name,fn,context,args) : this.trigger(name);
+			this.bind(name,fn,context,args);
 		}
 	});
 	
 	MUI.fn.extend({
-		trigger : function (type){
-			return this.each(function (elem){
-				MUI.event.trigger(type,elem);
-			});
-		},
 		after : function(){
 			if(this[0] && this[0].parentNode){
 				return this.domManip(arguments,function (elem){
@@ -713,7 +704,7 @@
 				}
 				
 				for(var i=0,nodeL = this.length;i<nodeL;i++){
-					MUI.style.call(this[i],name);
+					return MUI.style.call(this[i],name);
 				}
 			}
 		},
@@ -951,37 +942,11 @@
 	
 	MUI.each(domNode,function (method){
 		MUI.fn[method] = function (){
-			return MUI(MUI[method](this[0]));
+			for(var i=0;i<this.length;i++){
+				return MUI(MUI[method](this[i]));
+			}
 		}
 	});
-	
-	MUI.event = {
-		trigger : function (type,elem){
-			if(!elem || elem.nodeType === 3 || elem.nodeType === 8){
-				return undefined;
-			}
-			
-			var inlineEvent;
-			
-			//内联事件
-			if(elem['on'+type]){
-				inlineEvent = elem['on'+type];
-				
-				inlineEvent();
-				
-				elem['on'+type] = null;
-			}
-			
-			if(elem[type]){
-				elem[type]();
-			}
-			
-			//将执行过的内联事件再次绑定到当前元素
-			if(inlineEvent){
-				elem['on'+type] = inlineEvent;
-			}
-		}
-	};
 
 	MUI.extend({
 		scope : function (fn,c,args){
@@ -1353,6 +1318,8 @@ if (!JSON) {
 }
 
 //(function () {
+    "use strict";
+
     function f(n) {
         // Format integers to have at least two digits.
         return n < 10 ? '0' + n : n;
@@ -1679,3 +1646,5 @@ if (!JSON) {
 //}());
 window.JSON = window.JSON || JSON;
 })();
+
+
